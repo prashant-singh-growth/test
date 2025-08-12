@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Growth.cx - B2B SaaS Growth & Product Marketing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body { font-family: "Inter", sans-serif; }
+      .search-bar-container {
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 15px rgba(0,0,0,.05);
+      }
+      .mask-wrapper {
+        position: relative;
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      /* container that actually scrolls */
+      #text-cont {
+        overflow-x: hidden;
+        max-width: calc(100vw - 4rem); /* responsive */
+      }
+      /* add a small right padding so last word has visual breathing room */
+      #typing-text {
+        display: inline-block;
+        padding-right: 24px;
+      }
+      .reveal-mask {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        background: white;
+        border-left: 2px solid black; /* cursor effect */
+      }
+      @keyframes reveal {
+        from { width: 100%; }
+        to { width: 3%; }
+      }
+      @media screen and (max-width:750px) {
+         #typing-text {
+        display: inline-block;
+        padding-right: 34px;
+      }
+        @keyframes reveal {
+        from { width: 100%; }
+        to { width: 10%; }
+      }
+      }
+    </style>
+  </head>
+  <body class="bg-white">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="container mx-auto px-6 py-24 md:py-32 text-center">
+        <div class="max-w-3xl mx-auto ">
+          <div class="search-bar-container rounded-full border-black/30 border-2 flex items-center w-full p-2 pr-4 overflow-hidden">
+            <svg class="min-w-5 min-h-5 size-5 relative z-50 text-gray-400 ml-2 bg-white md:ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+
+            <div class="flex-grow flex items-center justify-start w-full">
+              <div class="mask-wrapper">
+                <div id="text-cont">
+                  <h1 id="typing-text" class="text-xs md:text-base font-medium text-gray-700 ml-3 text-left w-fit">
+                    How can I determine Product-Market Fit for my Saas startup?
+                  </h1>
+                </div>
+                <div class="reveal-mask"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      const questions = [
+        "How can I determine Product-Market Fit for my Saas startup?",
+        "How can I build cost-effective, in-house marketing team?",
+        "Where can I find the right Fractional CMO for my SaaS startup?",
+        "Is there any agency that gives assurance in resource allocation, deliverables & KPIs?"
+      ];
+
+      const textEl = document.getElementById("typing-text");
+      const maskEl = document.querySelector(".reveal-mask");
+      const scrollContainer = document.getElementById("text-cont");
+
+      let index = 0;
+      let scrollRaf = null;
+      let nextTimeout = null;
+
+      // smooth scroll fallback using RAF
+      function smoothScrollFallback(targetLeft, duration = 1000) {
+        cancelAnimationFrame(scrollRaf);
+        const start = scrollContainer.scrollLeft;
+        const distance = targetLeft - start;
+        const startTime = performance.now();
+        function step(now) {
+          const t = Math.min(1, (now - startTime) / duration);
+          // ease (optional) - linear is fine: const eased = t;
+          const current = start + distance * t;
+          scrollContainer.scrollLeft = current;
+          if (t < 1) scrollRaf = requestAnimationFrame(step);
+        }
+        scrollRaf = requestAnimationFrame(step);
+      }
+
+      function startAutoScrollIfNeeded() {
+        // compute widths using scrollWidth (actual content) and clientWidth (visible)
+        const containerWidth = scrollContainer.clientWidth;
+        const textWidth = textEl.scrollWidth;
+
+        // small extra buffer so last word isn't clipped on small screens
+        const extra = Math.max(24, Math.round(containerWidth * 0.04)); // min 24px or 4% of container
+
+        const maxScroll = Math.max(0, textWidth - containerWidth + extra);
+
+        if (maxScroll > 0) {
+          // try native smooth scroll first
+          try {
+            scrollContainer.scrollTo({ left: maxScroll, behavior: 'smooth' });
+          } catch (e) {
+            // fallback
+            smoothScrollFallback(maxScroll, Math.max(600, Math.round((maxScroll / 50) * 1000))); // duration scales
+          }
+        }
+      }
+
+      function showNext() {
+        // clear any previous animations/timeouts
+        cancelAnimationFrame(scrollRaf);
+        if (nextTimeout) { clearTimeout(nextTimeout); nextTimeout = null; }
+        scrollContainer.scrollLeft = 0; // reset position
+
+        // set text
+        textEl.textContent = questions[index];
+
+        // reset & play reveal mask
+        maskEl.style.width = "100%";
+        maskEl.style.animation = "none";
+        maskEl.offsetHeight; // reflow
+        maskEl.style.animation = "reveal 2.5s steps(40) forwards";
+
+        // start scroll AFTER reveal finishes + small pause so user can read
+        const waitBeforeScroll = 2500 + 300; // reveal (2.5s) + 300ms pause
+        nextTimeout = setTimeout(() => {
+          startAutoScrollIfNeeded();
+        }, waitBeforeScroll);
+
+        // schedule next phrase (give enough time for reveal + scroll + read)
+        const totalDisplay = 4000; // 7s per phrase (tweak as needed)
+        index = (index + 1) % questions.length;
+        nextTimeout = setTimeout(showNext, totalDisplay);
+      }
+
+      window.addEventListener("load", showNext);
+      // cancel RAF on unload to be safe
+      window.addEventListener("beforeunload", () => cancelAnimationFrame(scrollRaf));
+    </script>
+  </body>
+</html>
